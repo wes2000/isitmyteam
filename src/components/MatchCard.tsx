@@ -12,7 +12,6 @@ const LANE_DISPLAY: Record<string, string> = {
 };
 
 function formatChampName(name: string): string {
-  // Convert "MonkeyKing" style to "Monkey King"
   return name.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
 
@@ -79,7 +78,7 @@ export default function MatchCard({ match }: { match: MatchSummary }) {
           <p className={`text-lg font-bold ${scoreColor(match.teamGap)}`}>
             {match.teamGap > 0 ? "+" : ""}{match.teamGap}
           </p>
-          <p className="text-[10px] text-gray-600 uppercase">gap</p>
+          <p className="text-[10px] text-gray-600 uppercase">team gap</p>
         </div>
 
         {/* Date */}
@@ -103,10 +102,17 @@ export default function MatchCard({ match }: { match: MatchSummary }) {
       {/* Expanded details */}
       {expanded && (
         <div className="px-4 pb-4 pt-1 border-t border-white/5">
-          <p className="text-[10px] text-gray-600 uppercase tracking-wider mb-2">Lane Breakdown</p>
+          {/* Column headers */}
+          <div className="flex items-center gap-2 text-[10px] text-gray-600 uppercase tracking-wider mb-2">
+            <span className="w-14 flex-shrink-0">Lane</span>
+            <span className="flex-1 text-right">Your Team</span>
+            <span className="w-10 text-center">Gap</span>
+            <span className="flex-1 text-left">Enemy Team</span>
+          </div>
+
           <div className="space-y-2">
             {match.lanes.map((lane) => (
-              <div key={lane.lane} className="flex items-center gap-2 text-xs">
+              <div key={lane.lane} className={`flex items-center gap-2 text-xs ${lane.isPlayerLane ? "opacity-50" : ""}`}>
                 {/* Lane label */}
                 <span className="w-14 text-gray-500 flex-shrink-0">
                   {lane.label.replace(" Gap", "")}
@@ -114,14 +120,18 @@ export default function MatchCard({ match }: { match: MatchSummary }) {
 
                 {/* Ally side */}
                 <div className="flex-1 text-right">
-                  <span className="text-gray-300">{formatChampName(lane.allyChampion)}</span>
+                  {lane.isPlayerLane ? (
+                    <span className="text-white font-bold">{formatChampName(lane.allyChampion)} <span className="text-gray-400 font-normal">(you)</span></span>
+                  ) : (
+                    <span className="text-gray-300">{formatChampName(lane.allyChampion)}</span>
+                  )}
                   <span className="text-gray-500 ml-2">{lane.allyKda}</span>
                   <span className="text-gray-600 ml-1 text-[10px]">{lane.allyGoldPerMin}g/m</span>
                 </div>
 
                 {/* Score */}
-                <span className={`w-10 text-center font-bold ${scoreColor(lane.score)}`}>
-                  {lane.score > 0 ? "+" : ""}{lane.score}
+                <span className={`w-10 text-center font-bold ${lane.isPlayerLane ? "text-gray-600" : scoreColor(lane.score)}`}>
+                  {lane.isPlayerLane ? "—" : `${lane.score > 0 ? "+" : ""}${lane.score}`}
                 </span>
 
                 {/* Enemy side */}

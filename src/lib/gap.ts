@@ -135,11 +135,15 @@ export async function calculateGap(
           enemyKda: kdaString(enemy),
           enemyGoldPerMin: goldPerMin(enemy),
           score,
+          isPlayerLane: ally.puuid === puuid,
         };
       });
 
-    const matchTeamGap = matchLanes.length
-      ? Math.round(matchLanes.reduce((s, l) => s + l.score, 0) / matchLanes.length)
+    // Exclude the player's own lane from the team gap calculation
+    const playerLane = LANE_MAP[player.individualPosition];
+    const teammateLanes = matchLanes.filter((l) => l.lane !== playerLane);
+    const matchTeamGap = teammateLanes.length
+      ? Math.round(teammateLanes.reduce((s, l) => s + l.score, 0) / teammateLanes.length)
       : 0;
 
     matches.push({

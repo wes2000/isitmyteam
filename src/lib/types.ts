@@ -43,6 +43,7 @@ export interface MatchLaneDetail {
   enemyKda: string;
   enemyGoldPerMin: number;
   score: number;
+  isPlayerLane: boolean;
 }
 
 export interface MatchSummary {
