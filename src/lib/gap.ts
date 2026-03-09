@@ -12,6 +12,7 @@ const LANE_MAP: Record<string, Lane> = {
   JUNGLE: "JUNGLE",
   MIDDLE: "MIDDLE",
   BOTTOM: "BOTTOM",
+  UTILITY: "UTILITY",
 };
 
 const LANE_LABELS: Record<Lane, string> = {
@@ -19,7 +20,10 @@ const LANE_LABELS: Record<Lane, string> = {
   JUNGLE: "Jungle Gap",
   MIDDLE: "Mid Gap",
   BOTTOM: "Bot Gap",
+  UTILITY: "Support Gap",
 };
+
+const ALL_LANES: Lane[] = ["TOP", "JUNGLE", "MIDDLE", "BOTTOM", "UTILITY"];
 
 function kdaRatio(p: ParsedParticipant): number {
   return (p.kills + p.assists) / Math.max(1, p.deaths);
@@ -77,11 +81,13 @@ export async function calculateGap(
 
   const matchIds = await getMatchIds(puuid, regionKey, matchCount, queueId, startTime, endTime);
 
-  const laneAccum: Record<Lane, { allyKdas: number[]; allyGpms: number[]; enemyKdas: number[]; enemyGpms: number[] }> = {
-    TOP: { allyKdas: [], allyGpms: [], enemyKdas: [], enemyGpms: [] },
-    JUNGLE: { allyKdas: [], allyGpms: [], enemyKdas: [], enemyGpms: [] },
-    MIDDLE: { allyKdas: [], allyGpms: [], enemyKdas: [], enemyGpms: [] },
-    BOTTOM: { allyKdas: [], allyGpms: [], enemyKdas: [], enemyGpms: [] },
+  const emptyAccum = () => ({ allyKdas: [] as number[], allyGpms: [] as number[], enemyKdas: [] as number[], enemyGpms: [] as number[] });
+  const laneAccum: Record<Lane, ReturnType<typeof emptyAccum>> = {
+    TOP: emptyAccum(),
+    JUNGLE: emptyAccum(),
+    MIDDLE: emptyAccum(),
+    BOTTOM: emptyAccum(),
+    UTILITY: emptyAccum(),
   };
 
   const matches: MatchSummary[] = [];
@@ -119,7 +125,7 @@ export async function calculateGap(
       }
     }
 
-    const matchLanes: MatchLaneDetail[] = (["TOP", "JUNGLE", "MIDDLE", "BOTTOM"] as Lane[])
+    const matchLanes: MatchLaneDetail[] = ALL_LANES
       .filter((lane) => lanePlayers[lane]?.ally && lanePlayers[lane]?.enemy)
       .map((lane) => {
         const ally = lanePlayers[lane].ally!;
@@ -167,7 +173,7 @@ export async function calculateGap(
 
   const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-  const lanes: LaneGap[] = (["TOP", "JUNGLE", "MIDDLE", "BOTTOM"] as Lane[]).map((lane) => {
+  const lanes: LaneGap[] = ALL_LANES.map((lane) => {
     const acc = laneAccum[lane];
     const { score, kdaDiff, goldDiff } = scoreLane(avg(acc.allyKdas), avg(acc.allyGpms), avg(acc.enemyKdas), avg(acc.enemyGpms));
 

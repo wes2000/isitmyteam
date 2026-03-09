@@ -6,7 +6,7 @@ export interface GapRequest {
   season?: string;
 }
 
-export type Lane = "TOP" | "JUNGLE" | "MIDDLE" | "BOTTOM";
+export type Lane = "TOP" | "JUNGLE" | "MIDDLE" | "BOTTOM" | "UTILITY";
 
 export interface LaneStats {
   lane: Lane;
