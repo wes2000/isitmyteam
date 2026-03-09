@@ -55,6 +55,7 @@ export interface MatchSummary {
   playerLane: string;
   playerKda: string;
   playerGoldPerMin: number;
+  yourGap: number;
   teamGap: number;
   lanes: MatchLaneDetail[];
 }

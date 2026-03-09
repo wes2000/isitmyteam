@@ -147,6 +147,9 @@ export async function calculateGap(
       ? Math.round(teammateLanes.reduce((s, l) => s + l.score, 0) / teammateLanes.length)
       : 0;
 
+    const playerLaneData = matchLanes.find((l) => l.lane === playerLane);
+    const yourGap = playerLaneData ? playerLaneData.score : 0;
+
     matches.push({
       matchId: parsed.matchId,
       date: new Date(parsed.gameCreation).toISOString(),
@@ -156,6 +159,7 @@ export async function calculateGap(
       playerLane: player.individualPosition,
       playerKda: kdaString(player),
       playerGoldPerMin: goldPerMin(player),
+      yourGap,
       teamGap: matchTeamGap,
       lanes: matchLanes,
     });

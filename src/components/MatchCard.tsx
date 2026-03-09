@@ -73,12 +73,20 @@ export default function MatchCard({ match }: { match: MatchSummary }) {
           <p className="text-xs text-gray-500">{match.playerGoldPerMin} g/m</p>
         </div>
 
+        {/* Your Gap score */}
+        <div className="text-right flex-shrink-0 w-14">
+          <p className={`text-lg font-bold ${scoreColor(match.yourGap)}`}>
+            {match.yourGap > 0 ? "+" : ""}{match.yourGap}
+          </p>
+          <p className="text-[10px] text-gray-600 uppercase">you</p>
+        </div>
+
         {/* Team Gap score */}
-        <div className="text-right flex-shrink-0 w-16">
+        <div className="text-right flex-shrink-0 w-14">
           <p className={`text-lg font-bold ${scoreColor(match.teamGap)}`}>
             {match.teamGap > 0 ? "+" : ""}{match.teamGap}
           </p>
-          <p className="text-[10px] text-gray-600 uppercase">team gap</p>
+          <p className="text-[10px] text-gray-600 uppercase">team</p>
         </div>
 
         {/* Date */}
