@@ -3,6 +3,7 @@
 import { useState } from "react";
 import GapBar from "@/components/GapBar";
 import TeamGapScore from "@/components/TeamGapScore";
+import MatchCard from "@/components/MatchCard";
 import type { GapResult } from "@/lib/types";
 import { REGIONS } from "@/lib/types";
 
@@ -197,6 +198,20 @@ export default function Home() {
               />
             ))}
           </div>
+
+          {/* Match History */}
+          {result.matches.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                Match History
+              </h2>
+              <div className="space-y-2">
+                {result.matches.map((match) => (
+                  <MatchCard key={match.matchId} match={match} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </main>

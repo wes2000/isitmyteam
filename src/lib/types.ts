@@ -33,12 +33,38 @@ export interface LaneGap {
   matchesPlayed: number;
 }
 
+export interface MatchLaneDetail {
+  lane: Lane;
+  label: string;
+  allyChampion: string;
+  allyKda: string;
+  allyGoldPerMin: number;
+  enemyChampion: string;
+  enemyKda: string;
+  enemyGoldPerMin: number;
+  score: number;
+}
+
+export interface MatchSummary {
+  matchId: string;
+  date: string;
+  durationMinutes: number;
+  win: boolean;
+  playerChampion: string;
+  playerLane: string;
+  playerKda: string;
+  playerGoldPerMin: number;
+  teamGap: number;
+  lanes: MatchLaneDetail[];
+}
+
 export interface GapResult {
   summonerName: string;
   region: string;
   matchesAnalyzed: number;
   teamGap: number;
   lanes: LaneGap[];
+  matches: MatchSummary[];
 }
 
 /** Riot API region routing values */

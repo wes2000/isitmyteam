@@ -1,9 +1,9 @@
-import type { Lane, LaneGap, GapResult } from "./types";
+import type { Lane, LaneGap, GapResult, MatchSummary, MatchLaneDetail } from "./types";
 import {
   getPuuid,
   getMatchIds,
   getMatch,
-  parseMatchParticipants,
+  parseMatch,
   type ParsedParticipant,
 } from "./riot";
 
@@ -21,22 +21,18 @@ const LANE_LABELS: Record<Lane, string> = {
   BOTTOM: "Bot Gap",
 };
 
-function kda(p: ParsedParticipant): number {
+function kdaRatio(p: ParsedParticipant): number {
   return (p.kills + p.assists) / Math.max(1, p.deaths);
 }
 
-function goldPerMin(p: ParsedParticipant): number {
-  return p.goldEarned / Math.max(1, p.gameDurationSeconds / 60);
+function kdaString(p: ParsedParticipant): string {
+  return `${p.kills}/${p.deaths}/${p.assists}`;
 }
 
-/**
- * Score a lane gap on a -100 to +100 scale.
- * KDA difference weighted 60%, gold/min difference weighted 40%.
- *
- * The raw differences are clamped and scaled:
- *   KDA diff of +-5 maps to +-100
- *   Gold/min diff of +-150 maps to +-100
- */
+function goldPerMin(p: ParsedParticipant): number {
+  return Math.round(p.goldEarned / Math.max(1, p.gameDurationSeconds / 60));
+}
+
 function scoreLane(
   allyKda: number,
   allyGpm: number,
@@ -53,13 +49,12 @@ function scoreLane(
   return { score, kdaDiff: Math.round(kdaDiff * 100) / 100, goldDiff: Math.round(goldDiff * 100) / 100 };
 }
 
-/** Season start timestamps (approximate patch dates, epoch seconds) */
 const SEASON_TIMESTAMPS: Record<string, { start: number; end?: number }> = {
-  "S14": { start: 1704844800 },           // Jan 10 2024
+  "S14": { start: 1704844800 },
   "S14-Split1": { start: 1704844800, end: 1715558400 },
   "S14-Split2": { start: 1715558400, end: 1726876800 },
   "S14-Split3": { start: 1726876800, end: 1736467200 },
-  "S15": { start: 1736467200 },           // Jan 10 2025
+  "S15": { start: 1736467200 },
   "S15-Split1": { start: 1736467200, end: 1747180800 },
 };
 
@@ -81,7 +76,6 @@ export async function calculateGap(
 
   const matchIds = await getMatchIds(puuid, regionKey, matchCount, startTime, endTime);
 
-  // Per-lane accumulators
   const laneAccum: Record<Lane, { allyKdas: number[]; allyGpms: number[]; enemyKdas: number[]; enemyGpms: number[] }> = {
     TOP: { allyKdas: [], allyGpms: [], enemyKdas: [], enemyGpms: [] },
     JUNGLE: { allyKdas: [], allyGpms: [], enemyKdas: [], enemyGpms: [] },
@@ -89,42 +83,84 @@ export async function calculateGap(
     BOTTOM: { allyKdas: [], allyGpms: [], enemyKdas: [], enemyGpms: [] },
   };
 
+  const matches: MatchSummary[] = [];
+
   for (const matchId of matchIds) {
     const matchData = await getMatch(matchId, regionKey);
-    const participants = parseMatchParticipants(matchData);
+    const parsed = parseMatch(matchData);
+    const participants = parsed.participants;
 
-    // Find the searched player
     const player = participants.find((p) => p.puuid === puuid);
     if (!player) continue;
 
     const playerTeamId = player.teamId;
 
-    // Group participants by lane, skipping "Invalid" positions
+    // Build per-lane details for this match
+    const lanePlayers: Record<string, { ally?: ParsedParticipant; enemy?: ParsedParticipant }> = {};
+
     for (const p of participants) {
       const lane = LANE_MAP[p.individualPosition];
       if (!lane) continue;
 
-      const acc = laneAccum[lane];
+      if (!lanePlayers[lane]) lanePlayers[lane] = {};
       if (p.teamId === playerTeamId) {
-        acc.allyKdas.push(kda(p));
+        lanePlayers[lane].ally = p;
+
+        const acc = laneAccum[lane];
+        acc.allyKdas.push(kdaRatio(p));
         acc.allyGpms.push(goldPerMin(p));
       } else {
-        acc.enemyKdas.push(kda(p));
+        lanePlayers[lane].enemy = p;
+
+        const acc = laneAccum[lane];
+        acc.enemyKdas.push(kdaRatio(p));
         acc.enemyGpms.push(goldPerMin(p));
       }
     }
+
+    const matchLanes: MatchLaneDetail[] = (["TOP", "JUNGLE", "MIDDLE", "BOTTOM"] as Lane[])
+      .filter((lane) => lanePlayers[lane]?.ally && lanePlayers[lane]?.enemy)
+      .map((lane) => {
+        const ally = lanePlayers[lane].ally!;
+        const enemy = lanePlayers[lane].enemy!;
+        const { score } = scoreLane(kdaRatio(ally), goldPerMin(ally), kdaRatio(enemy), goldPerMin(enemy));
+
+        return {
+          lane,
+          label: LANE_LABELS[lane],
+          allyChampion: ally.championName,
+          allyKda: kdaString(ally),
+          allyGoldPerMin: goldPerMin(ally),
+          enemyChampion: enemy.championName,
+          enemyKda: kdaString(enemy),
+          enemyGoldPerMin: goldPerMin(enemy),
+          score,
+        };
+      });
+
+    const matchTeamGap = matchLanes.length
+      ? Math.round(matchLanes.reduce((s, l) => s + l.score, 0) / matchLanes.length)
+      : 0;
+
+    matches.push({
+      matchId: parsed.matchId,
+      date: new Date(parsed.gameCreation).toISOString(),
+      durationMinutes: Math.round(parsed.gameDurationSeconds / 60),
+      win: player.win,
+      playerChampion: player.championName,
+      playerLane: player.individualPosition,
+      playerKda: kdaString(player),
+      playerGoldPerMin: goldPerMin(player),
+      teamGap: matchTeamGap,
+      lanes: matchLanes,
+    });
   }
 
   const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
   const lanes: LaneGap[] = (["TOP", "JUNGLE", "MIDDLE", "BOTTOM"] as Lane[]).map((lane) => {
     const acc = laneAccum[lane];
-    const allyKdaAvg = avg(acc.allyKdas);
-    const allyGpmAvg = avg(acc.allyGpms);
-    const enemyKdaAvg = avg(acc.enemyKdas);
-    const enemyGpmAvg = avg(acc.enemyGpms);
-
-    const { score, kdaDiff, goldDiff } = scoreLane(allyKdaAvg, allyGpmAvg, enemyKdaAvg, enemyGpmAvg);
+    const { score, kdaDiff, goldDiff } = scoreLane(avg(acc.allyKdas), avg(acc.allyGpms), avg(acc.enemyKdas), avg(acc.enemyGpms));
 
     return {
       lane,
@@ -146,5 +182,6 @@ export async function calculateGap(
     matchesAnalyzed: matchIds.length,
     teamGap,
     lanes,
+    matches,
   };
 }

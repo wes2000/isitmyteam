@@ -58,19 +58,35 @@ export interface ParsedParticipant {
   assists: number;
   goldEarned: number;
   gameDurationSeconds: number;
+  championName: string;
+  win: boolean;
+}
+
+export interface ParsedMatch {
+  matchId: string;
+  gameCreation: number;
+  gameDurationSeconds: number;
+  participants: ParsedParticipant[];
 }
 
 /** Extract the relevant stats from a match for all participants */
-export function parseMatchParticipants(matchData: any): ParsedParticipant[] {
-  const duration = matchData.info.gameDuration; // seconds (post-patch)
-  return matchData.info.participants.map((p: any) => ({
-    puuid: p.puuid,
-    teamId: p.teamId,
-    individualPosition: p.individualPosition,
-    kills: p.kills,
-    deaths: p.deaths,
-    assists: p.assists,
-    goldEarned: p.goldEarned,
+export function parseMatch(matchData: any): ParsedMatch {
+  const duration = matchData.info.gameDuration;
+  return {
+    matchId: matchData.metadata.matchId,
+    gameCreation: matchData.info.gameCreation,
     gameDurationSeconds: duration,
-  }));
+    participants: matchData.info.participants.map((p: any) => ({
+      puuid: p.puuid,
+      teamId: p.teamId,
+      individualPosition: p.individualPosition,
+      kills: p.kills,
+      deaths: p.deaths,
+      assists: p.assists,
+      goldEarned: p.goldEarned,
+      gameDurationSeconds: duration,
+      championName: p.championName,
+      win: p.win,
+    })),
+  };
 }
