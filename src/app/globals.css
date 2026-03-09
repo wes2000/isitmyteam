@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a1f35;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --accent: #6366f1;
+}
+
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+@layer utilities {
+  .gap-bar-positive {
+    background: linear-gradient(90deg, #1a1f35 0%, #22c55e 100%);
+  }
+  .gap-bar-negative {
+    background: linear-gradient(90deg, #ef4444 0%, #1a1f35 100%);
+  }
+}
