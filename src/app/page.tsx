@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import GapBar from "@/components/GapBar";
 import TeamGapScore from "@/components/TeamGapScore";
+import GapRadar from "@/components/GapRadar";
 import MatchCard from "@/components/MatchCard";
 import type { GapResult } from "@/lib/types";
 import { REGIONS } from "@/lib/types";
@@ -183,18 +183,7 @@ export default function Home() {
 
           <TeamGapScore score={result.teamGap} matchesAnalyzed={result.matchesAnalyzed} />
 
-          <div className="grid gap-3">
-            {result.lanes.map((lane) => (
-              <GapBar
-                key={lane.lane}
-                label={lane.label}
-                score={lane.score}
-                kdaDiff={lane.kdaDiff}
-                goldDiff={lane.goldDiff}
-                matchesPlayed={lane.matchesPlayed}
-              />
-            ))}
-          </div>
+          <GapRadar lanes={result.lanes} />
 
           {/* Match History */}
           {result.matches.length > 0 && (
