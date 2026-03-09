@@ -7,21 +7,23 @@ import MatchCard from "@/components/MatchCard";
 import type { GapResult } from "@/lib/types";
 import { REGIONS } from "@/lib/types";
 
-const SEASON_OPTIONS = [
-  { value: "", label: "Last 20 games" },
-  { value: "S15", label: "Season 2025" },
-  { value: "S15-Split1", label: "S15 Split 1" },
-  { value: "S14", label: "Season 2024" },
-  { value: "S14-Split1", label: "S14 Split 1" },
-  { value: "S14-Split2", label: "S14 Split 2" },
-  { value: "S14-Split3", label: "S14 Split 3" },
+const QUEUE_OPTIONS = [
+  { value: "420", label: "Solo/Duo" },
+  { value: "440", label: "Flex" },
+  { value: "400", label: "Normal Draft" },
+];
+
+const TIMEFRAME_OPTIONS = [
+  { value: "20", label: "Last 20 games" },
+  { value: "30", label: "Last 30 games" },
+  { value: "50", label: "Last 50 games" },
 ];
 
 export default function Home() {
   const [riotId, setRiotId] = useState("");
   const [region, setRegion] = useState("na1");
-  const [season, setSeason] = useState("");
-  const [matchCount, setMatchCount] = useState(20);
+  const [queue, setQueue] = useState("420");
+  const [timeframe, setTimeframe] = useState("20");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GapResult | null>(null);
@@ -45,9 +47,9 @@ export default function Home() {
         gameName,
         tagLine,
         region,
-        count: String(matchCount),
+        count: timeframe,
+        queue,
       });
-      if (season) params.set("season", season);
 
       const res = await fetch(`/api/gap?${params}`);
       const data = await res.json();
@@ -96,8 +98,8 @@ export default function Home() {
             />
           </div>
 
-          {/* Region + Season row */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Region + Queue + Timeframe row */}
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label htmlFor="region" className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
                 Region
@@ -114,39 +116,34 @@ export default function Home() {
               </select>
             </div>
             <div>
-              <label htmlFor="season" className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
-                Timeframe
+              <label htmlFor="queue" className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
+                Queue
               </label>
               <select
-                id="season"
-                value={season}
-                onChange={(e) => setSeason(e.target.value)}
+                id="queue"
+                value={queue}
+                onChange={(e) => setQueue(e.target.value)}
                 className="w-full bg-[#111827] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
               >
-                {SEASON_OPTIONS.map((opt) => (
+                {QUEUE_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
             </div>
-          </div>
-
-          {/* Match count */}
-          <div>
-            <label htmlFor="count" className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
-              Games to analyze: {matchCount}
-            </label>
-            <input
-              id="count"
-              type="range"
-              min={5}
-              max={50}
-              step={5}
-              value={matchCount}
-              onChange={(e) => setMatchCount(Number(e.target.value))}
-              className="w-full accent-indigo-500"
-            />
-            <div className="flex justify-between text-[10px] text-gray-600 mt-1">
-              <span>5</span><span>50</span>
+            <div>
+              <label htmlFor="timeframe" className="block text-xs text-gray-500 uppercase tracking-wider mb-1.5">
+                Timeframe
+              </label>
+              <select
+                id="timeframe"
+                value={timeframe}
+                onChange={(e) => setTimeframe(e.target.value)}
+                className="w-full bg-[#111827] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-indigo-500 transition-colors"
+              >
+                {TIMEFRAME_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
             </div>
           </div>
 

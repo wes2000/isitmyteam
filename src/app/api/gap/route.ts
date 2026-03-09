@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const tagLine = params.get("tagLine");
   const region = params.get("region") || "na1";
   const matchCount = Math.min(50, Math.max(1, Number(params.get("count") || 20)));
+  const queue = params.get("queue") ? Number(params.get("queue")) : undefined;
   const season = params.get("season") || undefined;
 
   if (!gameName || !tagLine) {
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await calculateGap(gameName, tagLine, region, matchCount, season);
+    const result = await calculateGap(gameName, tagLine, region, matchCount, queue, season);
     return NextResponse.json(result);
   } catch (err: any) {
     const message = err.message || "Unknown error";

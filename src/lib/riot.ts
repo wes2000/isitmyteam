@@ -26,16 +26,25 @@ export async function getPuuid(
   return data.puuid;
 }
 
-/** Get recent ranked match IDs for a PUUID */
+/** Queue IDs: 420=Solo/Duo, 440=Flex, 400=Normal Draft */
+export const QUEUE_OPTIONS: Record<string, { id: number; label: string }> = {
+  solo: { id: 420, label: "Solo/Duo" },
+  flex: { id: 440, label: "Flex" },
+  normal: { id: 400, label: "Normal Draft" },
+};
+
+/** Get recent match IDs for a PUUID, filtered by queue */
 export async function getMatchIds(
   puuid: string,
   regionKey: string,
   count: number = 20,
+  queueId?: number,
   startTime?: number,
   endTime?: number
 ): Promise<string[]> {
   const regional = REGIONS[regionKey].regional;
-  let url = `https://${regional}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?type=ranked&count=${count}`;
+  let url = `https://${regional}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}`;
+  if (queueId) url += `&queue=${queueId}`;
   if (startTime) url += `&startTime=${startTime}`;
   if (endTime) url += `&endTime=${endTime}`;
   return riotFetch(url);

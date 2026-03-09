@@ -63,6 +63,7 @@ export async function calculateGap(
   tagLine: string,
   regionKey: string,
   matchCount: number = 20,
+  queueId?: number,
   season?: string
 ): Promise<GapResult> {
   const puuid = await getPuuid(gameName, tagLine, regionKey);
@@ -74,7 +75,7 @@ export async function calculateGap(
     endTime = SEASON_TIMESTAMPS[season].end;
   }
 
-  const matchIds = await getMatchIds(puuid, regionKey, matchCount, startTime, endTime);
+  const matchIds = await getMatchIds(puuid, regionKey, matchCount, queueId, startTime, endTime);
 
   const laneAccum: Record<Lane, { allyKdas: number[]; allyGpms: number[]; enemyKdas: number[]; enemyGpms: number[] }> = {
     TOP: { allyKdas: [], allyGpms: [], enemyKdas: [], enemyGpms: [] },
